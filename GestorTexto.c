@@ -42,7 +42,9 @@ void* hiloFormatoDesborde(void* arg) {
         }
 
         // Mostrar el texto formateado en pantalla
-        printf("%s\n", textoFormateado);
+        clear();
+        printw("%s\n", textoFormateado);
+        refresh();
 
         sleep(1); // Esperar 1 segundo antes de verificar el formato nuevamente
     }
@@ -52,64 +54,82 @@ void* hiloFormatoDesborde(void* arg) {
 
 void abrirArchivo(Archivo* archivo) {
     clear();
-    printf("Opción: Abrir archivo\n");
-    printf("Ingrese el nombre del archivo: ");
-    scanf("%s", archivo->nombre);
+    printw("Opción: Abrir archivo\n");
+    printw("Ingrese el nombre del archivo: ");
+    refresh();
+
+    scanw("%s", archivo->nombre);
     // Implementación para abrir el archivo
     // Aquí puedes leer el contenido del archivo y almacenarlo en archivo->contenido
-    printf("Archivo abierto exitosamente.\n");
+    printw("Archivo abierto exitosamente.\n");
     refresh();
     getch();
 }
 
 void guardarArchivo(Archivo* archivo) {
     clear();
-    printf("Opción: Guardar archivo\n");
+    printw("Opción: Guardar archivo\n");
     // Implementación para guardar el archivo actual
     // Aquí puedes guardar el contenido de archivo->contenido en el archivo actual
-    printf("Archivo guardado exitosamente.\n");
+    printw("Archivo guardado exitosamente.\n");
     refresh();
     getch();
 }
 
 void guardarComo(Archivo* archivo) {
     clear();
-    printf("Opción: Guardar como...\n");
-    printf("Ingrese el nombre del archivo: ");
-    scanf("%s", archivo->nombre);
+    printw("Opción: Guardar como...\n");
+    printw("Ingrese el nombre del archivo: ");
+    refresh();
+
+    scanw("%s", archivo->nombre);
     // Implementación para guardar el archivo con otro nombre
     // Aquí puedes guardar el contenido de archivo->contenido en un archivo con el nuevo nombre
-    printf("Archivo guardado como '%s' exitosamente.\n", archivo->nombre);
+    printw("Archivo guardado como '%s' exitosamente.\n", archivo->nombre);
     refresh();
     getch();
 }
 
 void escribirArchivo(Archivo* archivo) {
     clear();
-    printf("Opción: Escribir archivo\n");
-    printf("Ingrese el contenido del archivo:\n");
-    getchar(); // Limpiar el búfer de entrada
-    fgets(archivo->contenido, sizeof(archivo->contenido), stdin);
-    // Implementación para escribir en el archivo
-    printf("Contenido del archivo actualizado.\n");
+    printw("Opción: Escribir archivo\n");
+    printw("Ingrese el contenido del archivo:\n");
+    refresh();
+
+    // Leer el contenido del archivo línea por línea
+    int lineas = 0;
+    char linea[MAX_LINE_LENGTH];
+    while (1) {
+        scanw("%s", linea);
+
+        if (strcmp(linea, ":q") == 0) {
+            break;
+        }
+
+        strcat(archivo->contenido, linea);
+        strcat(archivo->contenido, "\n");
+        lineas++;
+    }
+
+    printw("Archivo escrito exitosamente. (%d líneas)\n", lineas);
     refresh();
     getch();
 }
 
 void cambiarColorLetra() {
     clear();
-    printf("Opción: Cambiar color de la letra\n");
+    printw("Opción: Cambiar color de la letra\n");
     // Implementación para cambiar el color de la letra
-    printf("Color de letra cambiado exitosamente.\n");
+    printw("Color de letra cambiado exitosamente.\n");
     refresh();
     getch();
 }
 
 void configuracion() {
     clear();
-    printf("Opción: Configuración\n");
+    printw("Opción: Configuración\n");
     // Implementación para la configuración
-    printf("Configuración realizada exitosamente.\n");
+    printw("Configuración realizada exitosamente.\n");
     refresh();
     getch();
 }
@@ -122,19 +142,19 @@ int main() {
     initscr(); // Inicializar la pantalla de ncurses
     keypad(stdscr, TRUE); // Habilitar el uso de teclas especiales
 
-    printf("=== Procesador de Texto ===\n");
+    printw("=== Procesador de Texto ===\n");
 
     while (1) {
         clear();
-        printf("\nOpciones:\n");
-        printf("1. Abrir archivo\n");
-        printf("2. Guardar archivo\n");
-        printf("3. Guardar como...\n");
-        printf("4. Escribir archivo\n");
-        printf("5. Cambiar color de la letra\n");
-        printf("6. Configuración\n");
-        printf("7. Salir\n");
-        printf("Seleccione una opción: ");
+        printw("\nOpciones:\n");
+        printw("1. Abrir archivo\n");
+        printw("2. Guardar archivo\n");
+        printw("3. Guardar como...\n");
+        printw("4. Escribir archivo\n");
+        printw("5. Cambiar color de la letra\n");
+        printw("6. Configuración\n");
+        printw("7. Salir\n");
+        printw("Seleccione una opción: ");
         refresh();
 
         opcion = getch();
@@ -166,14 +186,14 @@ int main() {
 
             case '7': // Salir
                 clear();
-                printf("Saliendo del programa...\n");
+                printw("Saliendo del programa...\n");
                 refresh();
                 endwin(); // Finalizar la pantalla de ncurses
                 exit(0);
 
             default:
                 clear();
-                printf("Opción inválida. Intente de nuevo.\n");
+                printw("Opción inválida. Intente de nuevo.\n");
                 refresh();
                 getch();
                 break;
@@ -182,7 +202,7 @@ int main() {
 
     // Crear el hilo de formato de desborde
     if (pthread_create(&hilo, NULL, hiloFormatoDesborde, (void*)&archivo) != 0) {
-        printf("Error al crear el hilo de formato de desborde.\n");
+        printw("Error al crear el hilo de formato de desborde.\n");
         exit(1);
     }
 
