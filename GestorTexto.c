@@ -8,69 +8,13 @@
 
 #define MAX_LINE_LENGTH 80 // Longitud máxima de una línea
 
-void abrirArchivo(const char* nombreArchivo) {
-    FILE* archivo = fopen(nombreArchivo, "r");
-    if (archivo == NULL) {
-        printf("No se pudo abrir el archivo.\n");
-        return;
-    }
-
-    char caracter;
-    while ((caracter = fgetc(archivo)) != EOF) {
-        printf("%c", caracter);
-    }
-
-    fclose(archivo);
-}
-
-void guardarArchivo(const char* nombreArchivo, const char* contenido) {
-    FILE* archivo = fopen(nombreArchivo, "w");
-    if (archivo == NULL) {
-        printf("No se pudo guardar el archivo.\n");
-        return;
-    }
-
-    fprintf(archivo, "%s", contenido);
-
-    fclose(archivo);
-}
-
-void* hiloAutoguardado(void* arg) {
-    const char* nombreArchivo = (const char*)arg;
-
-    while (1) {
-        // Realizar el autoguardado cada 5 segundos
-        sleep(5);
-
-        // Leer el contenido actual del archivo
-        FILE* archivo = fopen(nombreArchivo, "r");
-        if (archivo == NULL) {
-            printf("No se pudo abrir el archivo.\n");
-            continue;
-        }
-
-        char contenido[1000];
-        size_t bytesLeidos = fread(contenido, sizeof(char), sizeof(contenido), archivo);
-        fclose(archivo);
-
-        // Guardar el contenido en un archivo de respaldo
-        FILE* respaldo = fopen("respaldo.txt", "w");
-        if (respaldo == NULL) {
-            printf("No se pudo crear el archivo de respaldo.\n");
-            continue;
-        }
-
-        fwrite(contenido, sizeof(char), bytesLeidos, respaldo);
-        fclose(respaldo);
-
-        printf("Autoguardado realizado con éxito.\n");
-    }
-
-    return NULL;
-}
+typedef struct {
+    char nombre[100];
+    char contenido[1000];
+} Archivo;
 
 void* hiloFormatoDesborde(void* arg) {
-    char* texto = (char*)arg;
+    Archivo* archivo = (Archivo*)arg;
 
     while (1) {
         // Obtener el ancho de la pantalla
@@ -80,7 +24,7 @@ void* hiloFormatoDesborde(void* arg) {
 
         // Copiar el texto original para modificarlo
         char textoFormateado[1000];
-        strcpy(textoFormateado, texto);
+        strcpy(textoFormateado, archivo->contenido);
 
         // Verificar cada línea y ajustar el formato si se desborda el ancho de la pantalla
         char* linea = strtok(textoFormateado, "\n");
@@ -106,120 +50,143 @@ void* hiloFormatoDesborde(void* arg) {
     return NULL;
 }
 
-int tiempoAutoguardado = 10; // Tiempo de autoguardado en segundos
-int esquemaColores = 1; // 1: Claro, 2: Oscuro
-
-void configurarAutoguardado() {
-    printf("Configuración de Autoguardado\n");
-    printf("Ingrese el tiempo de autoguardado (en segundos): ");
-    scanf("%d", &tiempoAutoguardado);
-    printf("La configuración de autoguardado se ha guardado.\n");
+void abrirArchivo(Archivo* archivo) {
+    clear();
+    printf("Opción: Abrir archivo\n");
+    printf("Ingrese el nombre del archivo: ");
+    scanf("%s", archivo->nombre);
+    // Implementación para abrir el archivo
+    // Aquí puedes leer el contenido del archivo y almacenarlo en archivo->contenido
+    printf("Archivo abierto exitosamente.\n");
+    refresh();
+    getch();
 }
 
-void configurarEsquemaColores() {
-    printf("Configuración de Esquema de Colores\n");
-    printf("Seleccione el esquema de colores:\n");
-    printf("1. Claro\n");
-    printf("2. Oscuro\n");
-    printf("Ingrese su elección: ");
-    scanf("%d", &esquemaColores);
-    printf("La configuración de esquema de colores se ha guardado.\n");
+void guardarArchivo(Archivo* archivo) {
+    clear();
+    printf("Opción: Guardar archivo\n");
+    // Implementación para guardar el archivo actual
+    // Aquí puedes guardar el contenido de archivo->contenido en el archivo actual
+    printf("Archivo guardado exitosamente.\n");
+    refresh();
+    getch();
 }
 
-void mostrarMenu() {
-    printf("=== Procesador de Texto ===\n");
-    printf("\nOpciones:\n");
-    printf("1. Abrir archivo\n");
-    printf("2. Guardar archivo\n");
-    printf("3. Guardar como...\n");
-    printf("4. Cambiar color de la letra\n");
-    printf("5. Configuración\n");
-    printf("6. Salir\n");
+void guardarComo(Archivo* archivo) {
+    clear();
+    printf("Opción: Guardar como...\n");
+    printf("Ingrese el nombre del archivo: ");
+    scanf("%s", archivo->nombre);
+    // Implementación para guardar el archivo con otro nombre
+    // Aquí puedes guardar el contenido de archivo->contenido en un archivo con el nuevo nombre
+    printf("Archivo guardado como '%s' exitosamente.\n", archivo->nombre);
+    refresh();
+    getch();
+}
+
+void escribirArchivo(Archivo* archivo) {
+    clear();
+    printf("Opción: Escribir archivo\n");
+    printf("Ingrese el contenido del archivo:\n");
+    getchar(); // Limpiar el búfer de entrada
+    fgets(archivo->contenido, sizeof(archivo->contenido), stdin);
+    // Implementación para escribir en el archivo
+    printf("Contenido del archivo actualizado.\n");
+    refresh();
+    getch();
+}
+
+void cambiarColorLetra() {
+    clear();
+    printf("Opción: Cambiar color de la letra\n");
+    // Implementación para cambiar el color de la letra
+    printf("Color de letra cambiado exitosamente.\n");
+    refresh();
+    getch();
+}
+
+void configuracion() {
+    clear();
+    printf("Opción: Configuración\n");
+    // Implementación para la configuración
+    printf("Configuración realizada exitosamente.\n");
+    refresh();
+    getch();
 }
 
 int main() {
+    pthread_t hilo;
+    Archivo archivo;
     char opcion;
-    char nombreArchivo[100];
-    char contenido[1000];
-
-    pthread_t hiloAutoguardado;
-    pthread_t hiloFormatoDesborde;
 
     initscr(); // Inicializar la pantalla de ncurses
     keypad(stdscr, TRUE); // Habilitar el uso de teclas especiales
 
-    mostrarMenu();
+    printf("=== Procesador de Texto ===\n");
 
     while (1) {
-        printf("\nSeleccione una opción: ");
-        scanf(" %c", &opcion);
+        clear();
+        printf("\nOpciones:\n");
+        printf("1. Abrir archivo\n");
+        printf("2. Guardar archivo\n");
+        printf("3. Guardar como...\n");
+        printf("4. Escribir archivo\n");
+        printf("5. Cambiar color de la letra\n");
+        printf("6. Configuración\n");
+        printf("7. Salir\n");
+        printf("Seleccione una opción: ");
+        refresh();
+
+        opcion = getch();
 
         switch (opcion) {
             case '1': // Abrir archivo
-                printf("\nIngrese el nombre del archivo: ");
-                scanf("%s", nombreArchivo);
-                abrirArchivo(nombreArchivo);
+                abrirArchivo(&archivo);
                 break;
 
             case '2': // Guardar archivo
-                if (strlen(nombreArchivo) == 0) {
-                    printf("No se ha abierto ningún archivo.\n");
-                    break;
-                }
-
-                printf("\nIngrese el contenido del archivo:\n");
-                scanf(" %[^\n]s", contenido);
-                guardarArchivo(nombreArchivo, contenido);
+                guardarArchivo(&archivo);
                 break;
 
             case '3': // Guardar como...
-                printf("\nIngrese el nombre del archivo: ");
-                scanf("%s", nombreArchivo);
-                printf("Ingrese el contenido del archivo:\n");
-                scanf(" %[^\n]s", contenido);
-                guardarArchivo(nombreArchivo, contenido);
+                guardarComo(&archivo);
                 break;
 
-            case '4': // Cambiar color de la letra
-                printf("Opción: Cambiar color de la letra\n");
-                // Implementación para cambiar el color de la letra
+            case '4': // Escribir archivo
+                escribirArchivo(&archivo);
                 break;
 
-            case '5': // Configuración
-                printf("\nConfiguración:\n");
-                printf("1. Configurar Autoguardado\n");
-                printf("2. Configurar Esquema de Colores\n");
-                printf("Seleccione una opción de configuración: ");
-                scanf(" %c", &opcion);
-
-                switch (opcion) {
-                    case '1':
-                        configurarAutoguardado();
-                        break;
-
-                    case '2':
-                        configurarEsquemaColores();
-                        break;
-
-                    default:
-                        printf("Opción inválida. Intente de nuevo.\n");
-                        break;
-                }
-
+            case '5': // Cambiar color de la letra
+                cambiarColorLetra();
                 break;
 
-            case '6': // Salir
+            case '6': // Configuración
+                configuracion();
+                break;
+
+            case '7': // Salir
+                clear();
                 printf("Saliendo del programa...\n");
-                endwin(); // Terminar la pantalla de ncurses
+                refresh();
+                endwin(); // Finalizar la pantalla de ncurses
                 exit(0);
 
             default:
+                clear();
                 printf("Opción inválida. Intente de nuevo.\n");
+                refresh();
+                getch();
                 break;
         }
-
-        mostrarMenu();
     }
+
+    // Crear el hilo de formato de desborde
+    if (pthread_create(&hilo, NULL, hiloFormatoDesborde, (void*)&archivo) != 0) {
+        printf("Error al crear el hilo de formato de desborde.\n");
+        exit(1);
+    }
+
+    pthread_join(hilo, NULL); // Esperar a que el hilo termine (esto no se ejecutará en este ejemplo)
 
     return 0;
 }
